@@ -120,11 +120,18 @@
         }
 
         input{display:none}
+        /* 隐藏原生audio标签 */
+        audio{display:none}
     </style>
 </head>
 <body>
 
     <div class="top">本地磁带播放器</div>
+
+    <!-- 关键：使用source标签而不是直接给audio.src赋值 -->
+    <audio id="audio">
+        <source id="audioSource" src="" type="audio/mpeg">
+    
 
     <!-- 中间：磁带区域 -->
     <div class="cassette-area">
@@ -166,9 +173,11 @@
     </div>
 
 <script>
-    const audio = new Audio();
+    const audio = document.getElementById('audio');
+    const audioSource = document.getElementById('audioSource');
     let files = [];
     let currIndex = 0;
+    let isPlaying = false;
 
     const wheel = document.getElementById('wheel');
     const playBtn = document.getElementById('play');
@@ -184,98 +193,138 @@
     const fileInput = document.getElementById('fileInput');
 
     // 选择文件
-    selectBtn.onclick = () => fileInput.click();
-    fileInput.onchange = (e) => {
+    selectBtn.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
         files = Array.from(e.target.files);
         renderList();
-        if(files.length) playIndex(0);
-    };
+        if(files.length > 0) {
+            // 关键：先加载不自动播放，让用户手动点击播放按钮
+            loadIndex(currIndex, false);
+        }
+    });
 
     // 播放列表
     function renderList(){
         playlist.innerHTML = '';
         files.forEach((f,i)=>{
             let div = document.createElement('div');
-            div.className = 'item'+(i==currIndex?' active':'');
+            div.className = 'item' + (i === currIndex ? ' active' : '');
             div.innerText = f.name;
-            div.onclick = () => playIndex(i);
+            div.addEventListener('click', () => {
+                loadIndex(i, true);
+            });
             playlist.appendChild(div);
         });
     }
 
-    // 播放
-    function playIndex(i){
+    // 加载指定索引的音频
+    function loadIndex(i, autoPlay) {
+        if (!files.length) return;
         currIndex = i;
-        audio.src = URL.createObjectURL(files[i]);
-        audio.play();
-        playBtn.innerText = '⏸️';
-        wheel.classList.add('play');
+        const url = URL.createObjectURL(files[i]);
+        
+        // 关键：使用source标签而不是直接给audio.src赋值
+        audioSource.src = url;
+        audio.load(); // 必须调用load()重新加载
+        
+        if (autoPlay) {
+            // 关键：在用户点击事件的同步代码里调用play()
+            audio.play().then(() => {
+                isPlaying = true;
+                playBtn.innerText = '⏸️';
+                wheel.classList.add('play');
+            }).catch(err => {
+                console.log('播放失败，需要用户手动点击播放按钮', err);
+                isPlaying = false;
+                playBtn.innerText = '▶️';
+                wheel.classList.remove('play');
+            });
+        } else {
+            isPlaying = false;
+            playBtn.innerText = '▶️';
+            wheel.classList.remove('play');
+        }
+        
         renderList();
     }
 
     // 播放暂停
-    playBtn.onclick = () => {
-        if(!files.length) return;
-        if(audio.paused){
-            audio.play();
-            playBtn.innerText='⏸️';
-            wheel.classList.add('play');
-        }else{
+    playBtn.addEventListener('click', () => {
+        if (!files.length) return;
+        if (isPlaying) {
             audio.pause();
-            playBtn.innerText='▶️';
+            isPlaying = false;
+            playBtn.innerText = '▶️';
             wheel.classList.remove('play');
-        }
-    };
-
-    // 上下曲
-    prevBtn.onclick = () => {
-        if(currIndex>0) playIndex(currIndex-1);
-    };
-    nextBtn.onclick = () => {
-        if(currIndex < files.length-1) playIndex(currIndex+1);
-    };
-
-    // 进度条
-    audio.ontimeupdate = () => {
-        if(!audio.duration) return;
-        let per = (audio.currentTime / audio.duration)*100;
-        bar.style.width = per+'%';
-        dot.style.left = per+'%';
-        currText.innerText = fmt(audio.currentTime);
-        durText.innerText = fmt(audio.duration);
-    };
-
-    // 点击跳转
-    progressWrap.onclick = (e) => {
-        let rect = progressWrap.getBoundingClientRect();
-        let per = (e.clientX - rect.left) / rect.width;
-        audio.currentTime = per * audio.duration;
-    };
-
-    // 自动下一曲
-    audio.onended = () => {
-        if(currIndex < files.length-1){
-            playIndex(currIndex+1);
-        }else{
-            playBtn.innerText='▶️';
-            wheel.classList.remove('play');
-        }
-    };
-
-    // 倍速
-    document.querySelectorAll('.speed button').forEach(b=>{
-        b.onclick=()=>{
-            document.querySelectorAll('.speed button').forEach(x=>x.classList.remove('active'));
-            b.classList.add('active');
-            audio.playbackRate = parseFloat(b.dataset.s);
+        } else {
+            audio.play().then(() => {
+                isPlaying = true;
+                playBtn.innerText = '⏸️';
+                wheel.classList.add('play');
+            }).catch(err => {
+                console.log('播放失败', err);
+            });
         }
     });
 
-    function fmt(t){
-        if(isNaN(t)) return '00:00';
-        let m = Math.floor(t/60);
-        let s = Math.floor(t%60);
-        return `${String(m).padStart(2,0)}:${String(s).padStart(2,0)}`;
+    // 上下曲
+    prevBtn.addEventListener('click', () => {
+        if (currIndex > 0) {
+            loadIndex(currIndex - 1, true);
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (currIndex < files.length - 1) {
+            loadIndex(currIndex + 1, true);
+        }
+    });
+
+    // 进度条
+    audio.addEventListener('timeupdate', () => {
+        if (!audio.duration) return;
+        let per = (audio.currentTime / audio.duration) * 100;
+        bar.style.width = per + '%';
+        dot.style.left = per + '%';
+        currText.innerText = fmt(audio.currentTime);
+        durText.innerText = fmt(audio.duration);
+    });
+
+    // 点击跳转
+    progressWrap.addEventListener('click', (e) => {
+        let rect = progressWrap.getBoundingClientRect();
+        let per = (e.clientX - rect.left) / rect.width;
+        audio.currentTime = per * audio.duration;
+    });
+
+    // 自动下一曲
+    audio.addEventListener('ended', () => {
+        if (currIndex < files.length - 1) {
+            loadIndex(currIndex + 1, true);
+        } else {
+            isPlaying = false;
+            playBtn.innerText = '▶️';
+            wheel.classList.remove('play');
+        }
+    });
+
+    // 倍速
+    document.querySelectorAll('.speed button').forEach(b => {
+        b.addEventListener('click', () => {
+            document.querySelectorAll('.speed button').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            audio.playbackRate = parseFloat(b.dataset.s);
+        });
+    });
+
+    function fmt(t) {
+        if (isNaN(t)) return '00:00';
+        let m = Math.floor(t / 60);
+        let s = Math.floor(t % 60);
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 </script>
 </body>
