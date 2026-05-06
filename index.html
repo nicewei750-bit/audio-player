@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>磁带播放器</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
@@ -32,7 +33,7 @@
             display:flex;
             align-items:center;
             justify-content:center;
-            box-shadow:0 0 30px #000;
+            box-shadow:0 0 30px rgba(0,0,0,0.5);
         }
         .wheel{
             width:90px;
@@ -103,7 +104,7 @@
         }
         .item{
             background:#2C2C2E;padding:14px;border-radius:10px;
-            margin-bottom:8px;
+            margin-bottom:8px;cursor:pointer;
         }
         .item.active{background:#007AFF}
 
@@ -120,7 +121,6 @@
         }
 
         input{display:none}
-        /* 隐藏原生audio标签 */
         audio{display:none}
     </style>
 </head>
@@ -128,7 +128,7 @@
 
     <div class="top">本地磁带播放器</div>
 
-    <!-- 关键：使用source标签而不是直接给audio.src赋值 -->
+    <!-- 正确闭合的audio标签 -->
     <audio id="audio">
         <source id="audioSource" src="" type="audio/mpeg">
     
@@ -201,7 +201,6 @@
         files = Array.from(e.target.files);
         renderList();
         if(files.length > 0) {
-            // 关键：先加载不自动播放，让用户手动点击播放按钮
             loadIndex(currIndex, false);
         }
     });
@@ -226,18 +225,16 @@
         currIndex = i;
         const url = URL.createObjectURL(files[i]);
         
-        // 关键：使用source标签而不是直接给audio.src赋值
+        // 修复iOS mp3播放问题
         audioSource.src = url;
-        audio.load(); // 必须调用load()重新加载
+        audio.load();
         
         if (autoPlay) {
-            // 关键：在用户点击事件的同步代码里调用play()
             audio.play().then(() => {
                 isPlaying = true;
                 playBtn.innerText = '⏸️';
                 wheel.classList.add('play');
             }).catch(err => {
-                console.log('播放失败，需要用户手动点击播放按钮', err);
                 isPlaying = false;
                 playBtn.innerText = '▶️';
                 wheel.classList.remove('play');
@@ -264,8 +261,6 @@
                 isPlaying = true;
                 playBtn.innerText = '⏸️';
                 wheel.classList.add('play');
-            }).catch(err => {
-                console.log('播放失败', err);
             });
         }
     });
