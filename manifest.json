@@ -1,0 +1,104 @@
+{
+  "name": "本地小说音频播放器",
+  "short_name": "音频播放器",
+  "description": "一款专为iPhone设计的本地小说音频播放器，支持播放控制、播放列表管理和截图功能",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#18181A",
+  "theme_color": "#007AFF",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshots/screenshot-1.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "文件选择界面"
+    },
+    {
+      "src": "assets/screenshots/screenshot-2.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "播放器界面"
+    },
+    {
+      "src": "assets/screenshots/screenshot-3.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "播放列表界面"
+    }
+  ],
+  "categories": ["entertainment", "music", "productivity"],
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "导入文件",
+      "short_name": "导入",
+      "description": "导入本地音频文件",
+      "url": "/index.html?action=import",
+      "icons": [{ "src": "assets/icons/import-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "播放列表",
+      "short_name": "列表",
+      "description": "查看播放列表",
+      "url": "/index.html?action=playlist",
+      "icons": [{ "src": "assets/icons/playlist-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

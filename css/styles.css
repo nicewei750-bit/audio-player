@@ -1,0 +1,887 @@
+/* iOS风格的额外样式 */
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideLeft {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideRight {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes pulse-slow {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes rotate-slow {
+    from { transform: rotateY(0deg); }
+    to { transform: rotateY(360deg); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+@keyframes wave {
+    0% { height: 10px; }
+    50% { height: 30px; }
+    100% { height: 10px; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes scaleOut {
+    from { transform: scale(1); opacity: 1; }
+    to { transform: scale(0.9); opacity: 0; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* 页面过渡动画 */
+.page-transition {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.page-enter {
+    animation: slideUp 0.3s ease-out forwards;
+}
+
+.page-leave {
+    animation: slideDown 0.3s ease-in forwards;
+}
+
+/* 按钮波纹效果 */
+.ripple-effect {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+}
+
+/* 播放按钮动画 */
+.pulse-animation {
+    animation: pulse 0.3s ease-out;
+}
+
+/* 列表项动画 */
+.playlist-item {
+    transition: all 0.2s ease;
+}
+
+.playlist-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    transform: translateX(5px);
+}
+
+.playlist-item:active {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
+}
+
+.playlist-item.selected {
+    background-color: rgba(0, 122, 255, 0.2);
+    animation: pulse 0.3s ease-out;
+}
+
+/* 音频波形动画 */
+.audio-wave {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    margin-left: 10px;
+}
+
+.audio-wave span {
+    display: block;
+    width: 3px;
+    height: 10px;
+    margin: 0 2px;
+    background-color: #007AFF;
+    border-radius: 3px;
+    animation: wave 1.2s linear infinite;
+    transform-origin: bottom;
+}
+
+.audio-wave.active span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.audio-wave.active span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.audio-wave.active span:nth-child(4) {
+    animation-delay: 0.6s;
+}
+
+.audio-wave.active span:nth-child(5) {
+    animation-delay: 0.8s;
+}
+
+/* 封面旋转动画 */
+#bookCover {
+    transition: transform 0.3s ease;
+}
+
+.rotate-slow {
+    animation: rotate-slow 20s linear infinite;
+    transform-style: preserve-3d;
+}
+
+.rotate-on-hover {
+    animation: rotate-slow 5s linear infinite;
+    transform-style: preserve-3d;
+}
+
+/* 进度条动画 */
+#progressBar {
+    transition: background 0.3s ease;
+}
+
+#progressBar.scrubbing {
+    background: linear-gradient(to right, #007AFF var(--target-value, 0%), #48484A var(--target-value, 0%));
+}
+
+/* 音量指示器 */
+.volume-indicator {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 10px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.volume-indicator::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.7) transparent transparent transparent;
+}
+
+.volume-indicator.hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+}
+
+/* 主题切换动画 */
+.theme-transition {
+    transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+}
+
+/* 加载动画 */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: opacity 0.3s ease;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #007AFF;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-container {
+    position: relative;
+}
+
+.fade-out {
+    opacity: 0;
+}
+
+/* 通知动画 */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background-color: #3A3A3C;
+    color: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 250px;
+    max-width: 400px;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    background-color: #34C759;
+}
+
+.notification.error {
+    background-color: #FF3B30;
+}
+
+.notification.warning {
+    background-color: #FF9500;
+}
+
+.notification.info {
+    background-color: #007AFF;
+}
+
+.notification-message {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: #FFFFFF;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.notification-close:hover {
+    opacity: 1;
+}
+
+/* 卡片悬停效果 */
+.card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 滑动手势反馈 */
+.swipe-feedback {
+    transition: transform 0.2s ease;
+}
+
+/* 按钮状态动画 */
+button {
+    transition: all 0.2s ease;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 输入框焦点动画 */
+input:focus {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+}
+
+/* 标签页切换动画 */
+.tab-content {
+    transition: opacity 0.3s ease;
+}
+
+.tab-content.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* 模态框动画 */
+.modal {
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    opacity: 1;
+}
+
+.modal-content {
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+}
+
+/* 滚动条动画 */
+::-webkit-scrollbar-thumb {
+    transition: background-color 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #636366;
+}
+
+/* 文本高亮动画 */
+::selection {
+    background-color: rgba(0, 122, 255, 0.3);
+    color: #FFFFFF;
+}
+
+/* 工具提示动画 */
+.tooltip .tooltip-text {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.tooltip:hover .tooltip-text {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+/* 列表滚动动画 */
+.scroll-animation {
+    transition: transform 0.3s ease;
+}
+
+/* 旋转图标动画 */
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotate-icon.rotated {
+    transform: rotate(180deg);
+}
+
+/* 淡入淡出动画 */
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.fade-out {
+    animation: fadeOut 0.5s ease-in forwards;
+}
+
+/* 缩放动画 */
+.scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+}
+
+.scale-out {
+    animation: scaleOut 0.3s ease-in forwards;
+}
+
+/* 震动动画 */
+.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+/* 弹跳动画 */
+.bounce {
+    animation: bounce 0.5s ease-in-out;
+}
+
+/* 列表项动画 */
+.playlist-item {
+    transition: all 0.2s ease;
+}
+
+.playlist-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.playlist-item:active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 按钮动画 */
+.btn-ios {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-ios:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-ios:active:after {
+    width: 300px;
+    height: 300px;
+}
+
+/* 进度条自定义样式 */
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background: #007AFF;
+    cursor: pointer;
+    margin-top: -4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: #48484A;
+    border-radius: 2px;
+}
+
+/* 玻璃效果 */
+.glass-effect {
+    background: rgba(30, 30, 30, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 安全区域适配 */
+@supports (padding: max(0px)) {
+    .safe-area-inset-top {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+    
+    .safe-area-inset-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    .safe-area-inset-left {
+        padding-left: env(safe-area-inset-left, 0px);
+    }
+    
+    .safe-area-inset-right {
+        padding-right: env(safe-area-inset-right, 0px);
+    }
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    /* 已经在tailwind配置中设置了深色模式 */
+}
+
+/* 浅色模式适配 */
+@media (prefers-color-scheme: light) {
+    .light-mode {
+        --bg-color: #F2F2F7;
+        --text-color: #000000;
+        --primary-color: #007AFF;
+        --secondary-color: #34C759;
+        --danger-color: #FF3B30;
+        --border-color: #E5E5EA;
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 375px) {
+    .book-cover {
+        width: 240px !important;
+        height: 240px !important;
+    }
+    
+    .play-button {
+        width: 56px !important;
+        height: 56px !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .container {
+        max-width: 500px;
+        margin: 0 auto;
+        height: 100vh;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* 辅助功能 */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+    .high-contrast {
+        --bg-color: #000000;
+        --text-color: #FFFFFF;
+        --primary-color: #FFFFFF;
+        --border-color: #FFFFFF;
+    }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #48484A;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #636366;
+}
+
+/* 选中文本样式 */
+::selection {
+    background-color: rgba(0, 122, 255, 0.3);
+    color: #FFFFFF;
+}
+
+/* 输入框焦点样式 */
+input:focus {
+    outline: none;
+    border-color: #007AFF;
+}
+
+/* 禁用状态 */
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* 加载动画 */
+.loading {
+    position: relative;
+}
+
+.loading:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #007AFF;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 音频波形动画 */
+.audio-wave {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+}
+
+.audio-wave span {
+    display: block;
+    width: 3px;
+    height: 10px;
+    margin: 0 2px;
+    background-color: #007AFF;
+    border-radius: 3px;
+    animation: wave 1.2s linear infinite;
+    transform-origin: bottom;
+}
+
+.audio-wave span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.audio-wave span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.audio-wave span:nth-child(4) {
+    animation-delay: 0.6s;
+}
+
+.audio-wave span:nth-child(5) {
+    animation-delay: 0.8s;
+}
+
+@keyframes wave {
+    0% {
+        height: 10px;
+    }
+    50% {
+        height: 30px;
+    }
+    100% {
+        height: 10px;
+    }
+}
+
+/* 通知样式 */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background-color: #3A3A3C;
+    color: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    background-color: #34C759;
+}
+
+.notification.error {
+    background-color: #FF3B30;
+}
+
+.notification.warning {
+    background-color: #FF9500;
+}
+
+.notification.info {
+    background-color: #007AFF;
+}
+
+/* 模态框样式 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: #1C1C1E;
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #8E8E93;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.modal-body {
+    margin-bottom: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.modal-button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.modal-button-primary {
+    background-color: #007AFF;
+    color: #FFFFFF;
+    margin-left: 12px;
+}
+
+.modal-button-secondary {
+    background-color: #3A3A3C;
+    color: #FFFFFF;
+}
+
+/* 工具提示样式 */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltip-text {
+    visibility: hidden;
+    background-color: #3A3A3C;
+    color: #FFFFFF;
+    text-align: center;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+}
+
+.tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #3A3A3C transparent transparent transparent;
+}
+
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}

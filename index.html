@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>本地小说音频播放器</title>
+    <!-- PWA相关 -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007AFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="音频播放器">
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
+    <link rel="icon" href="/assets/icons/icon-192x192.png" type="image/png">
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- JSZip for creating zip files -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <!-- FileSaver.js for saving files -->
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007AFF',
+                        secondary: '#34C759',
+                        danger: '#FF3B30',
+                        dark: {
+                            100: '#8E8E93',
+                            200: '#636366',
+                            300: '#48484A',
+                            400: '#3A3A3C',
+                            500: '#2C2C2E',
+                            600: '#1C1C1E',
+                            700: '#1A1A1C',
+                            800: '#18181A',
+                            900: '#000000',
+                        },
+                        light: {
+                            100: '#FFFFFF',
+                            200: '#F2F2F7',
+                            300: '#E5E5EA',
+                            400: '#D1D1D6',
+                            500: '#C7C7CC',
+                            600: '#AEAEB2',
+                            700: '#8E8E93',
+                            800: '#636366',
+                            900: '#48484A',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'San Francisco', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'ios': '0 2px 10px rgba(0, 0, 0, 0.1)',
+                        'ios-inset': 'inset 0 1px 2px rgba(0, 0, 0, 0.1)',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            },
+            darkMode: 'class',
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            }
+            .glass-effect {
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+            .scrollbar-hidden::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hidden {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .audio-wave {
+                position: relative;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .audio-wave span {
+                display: block;
+                width: 3px;
+                margin: 0 2px;
+                background-color: theme('colors.primary');
+                border-radius: 3px;
+                animation: wave 1.2s linear infinite;
+                transform-origin: bottom;
+            }
+            @keyframes wave {
+                0% {
+                    height: 10px;
+                }
+                50% {
+                    height: 30px;
+                }
+                100% {
+                    height: 10px;
+                }
+            }
+            .audio-wave span:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .audio-wave span:nth-child(3) {
+                animation-delay: 0.4s;
+            }
+            .audio-wave span:nth-child(4) {
+                animation-delay: 0.6s;
+            }
+            .audio-wave span:nth-child(5) {
+                animation-delay: 0.8s;
+            }
+            .progress-bar {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 100%;
+                height: 4px;
+                background: #48484A;
+                outline: none;
+                border-radius: 2px;
+            }
+            .progress-bar::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 12px;
+                height: 12px;
+                background: #007AFF;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .progress-bar::-webkit-slider-thumb:hover {
+                transform: scale(1.2);
+            }
+            .volume-slider {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 100%;
+                height: 4px;
+                background: #48484A;
+                outline: none;
+                border-radius: 2px;
+            }
+            .volume-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 10px;
+                height: 10px;
+                background: #8E8E93;
+                border-radius: 50%;
+                cursor: pointer;
+            }
+            .btn-ios {
+                transition: all 0.2s ease;
+            }
+            .btn-ios:active {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+            .safe-area-inset-top {
+                padding-top: env(safe-area-inset-top, 0px);
+            }
+            .safe-area-inset-bottom {
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-dark-800 text-light-100 font-sans min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-dark-700 border-b border-dark-500 safe-area-inset-top">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <button id="backButton" class="text-primary p-2">
+                <i class="fa fa-chevron-left text-lg"></i>
+            </button>
+            <h1 class="text-lg font-medium">本地小说音频</h1>
+            <button id="themeToggle" class="text-primary p-2">
+                <i class="fa fa-moon-o text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col">
+        <!-- File Selection Area -->
+        <div id="fileSelection" class="p-6 flex flex-col items-center justify-center">
+            <div class="w-32 h-32 rounded-full bg-dark-600 flex items-center justify-center mb-6">
+                <i class="fa fa-music text-5xl text-primary"></i>
+            </div>
+            <h2 class="text-xl font-semibold mb-2">导入音频文件</h2>
+            <p class="text-dark-100 text-center mb-6">点击下方按钮选择本地音频文件，或拖拽文件到此处</p>
+            <label for="fileInput" class="bg-primary text-white px-6 py-3 rounded-full font-medium cursor-pointer btn-ios">
+                <i class="fa fa-plus mr-2"></i>选择文件
+            </label>
+            <input type="file" id="fileInput" class="hidden" accept="audio/*" multiple>
+            <div id="dropZone" class="mt-6 w-full border-2 border-dashed border-dark-500 rounded-lg p-6 text-center">
+                <p class="text-dark-100">拖拽音频文件到此处</p>
+            </div>
+        </div>
+
+        <!-- Player Area (Hidden by default) -->
+        <div id="playerArea" class="flex-1 flex flex-col hidden">
+            <!-- Album Art/Book Cover -->
+            <div class="flex-1 flex items-center justify-center p-8">
+                <div id="bookCover" class="w-64 h-64 rounded-lg shadow-ios overflow-hidden bg-dark-600 flex items-center justify-center">
+                    <i class="fa fa-book text-6xl text-dark-300"></i>
+                </div>
+            </div>
+
+            <!-- Song/Chapter Info -->
+            <div class="p-4 text-center">
+                <h2 id="title" class="text-xl font-semibold truncate">未知标题</h2>
+                <p id="author" class="text-dark-100 text-sm">未知作者</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="px-6 pb-2">
+                <div class="flex items-center justify-between text-xs text-dark-100 mb-1">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+                <input type="range" id="progressBar" class="progress-bar" min="0" max="100" value="0">
+            </div>
+
+            <!-- Controls -->
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <button id="repeatButton" class="text-dark-100 p-2">
+                        <i class="fa fa-repeat"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <button id="prevButton" class="text-light-100 p-3">
+                            <i class="fa fa-step-backward"></i>
+                        </button>
+                        <button id="playPauseButton" class="bg-primary text-white w-14 h-14 rounded-full flex items-center justify-center mx-4 btn-ios">
+                            <i class="fa fa-play text-xl"></i>
+                        </button>
+                        <button id="nextButton" class="text-light-100 p-3">
+                            <i class="fa fa-step-forward"></i>
+                        </button>
+                    </div>
+                    <button id="randomButton" class="text-dark-100 p-2">
+                        <i class="fa fa-random"></i>
+                    </button>
+                </div>
+
+                <!-- Volume Control -->
+                <div class="flex items-center px-4">
+                    <button id="muteButton" class="text-dark-100 p-2">
+                        <i class="fa fa-volume-up"></i>
+                    </button>
+                    <input type="range" id="volumeSlider" class="volume-slider flex-1 mx-2" min="0" max="100" value="80">
+                    <button id="speedButton" class="text-dark-100 p-2">
+                        <span class="text-xs">1.0x</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Playlist Area (Hidden by default) -->
+        <div id="playlistArea" class="flex-1 hidden">
+            <div class="p-4 border-b border-dark-500 flex items-center justify-between">
+                <h2 class="text-lg font-medium">播放列表</h2>
+                <div class="flex">
+                    <button id="clearPlaylistButton" class="text-dark-100 p-2">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                    <button id="screenshotButton" class="text-primary p-2">
+                        <i class="fa fa-camera"></i>
+                    </button>
+                </div>
+            </div>
+            <ul id="playlist" class="overflow-y-auto scrollbar-hidden flex-1">
+                <!-- Playlist items will be added here -->
+            </ul>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bg-dark-700 border-t border-dark-500 safe-area-inset-bottom">
+        <div class="flex items-center justify-around">
+            <button id="libraryButton" class="flex flex-col items-center p-3 text-primary">
+                <i class="fa fa-list-ul text-xl"></i>
+                <span class="text-xs mt-1">文件</span>
+            </button>
+            <button id="playerButton" class="flex flex-col items-center p-3 text-dark-100">
+                <i class="fa fa-play-circle-o text-xl"></i>
+                <span class="text-xs mt-1">播放</span>
+            </button>
+            <button id="playlistButton" class="flex flex-col items-center p-3 text-dark-100">
+                <i class="fa fa-music text-xl"></i>
+                <span class="text-xs mt-1">列表</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Speed Selection Modal (Hidden by default) -->
+    <div id="speedModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50 hidden">
+        <div class="bg-dark-700 rounded-t-2xl w-full p-6 safe-area-inset-bottom">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">播放速度</h3>
+                <button id="closeSpeedModal" class="text-dark-100 p-2">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-4 gap-4">
+                <button class="speed-option bg-dark-600 p-3 rounded-lg text-center" data-speed="0.5">0.5x</button>
+                <button class="speed-option bg-dark-600 p-3 rounded-lg text-center" data-speed="0.75">0.75x</button>
+                <button class="speed-option bg-dark-600 p-3 rounded-lg text-center" data-speed="1.0">1.0x</button>
+                <button class="speed-option bg-dark-600 p-3 rounded-lg text-center" data-speed="1.25">1.25x</button>
+                <button class="speed-option bg-dark-600 p-3 rounded-lg text-center" data-speed="1.5">1.5x</button>
+                <button class="speed-option bg-dark-600 p-3 rounded-lg text-center" data-speed="1.75">1.75x</button>
+                <button class="speed-option bg-dark-600 p-3 rounded-lg text-center" data-speed="2.0">2.0x</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification (Hidden by default) -->
+    <div id="toast" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-dark-600 text-light-100 px-4 py-2 rounded-lg shadow-ios hidden">
+        <p id="toastMessage">操作成功</p>
+    </div>
+    <!-- 动画模块 -->
+    <script src="js/animations.js"></script>
+    
+    <!-- PWA Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then((registration) => {
+                        console.log('Service Worker 注册成功:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Service Worker 注册失败:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
