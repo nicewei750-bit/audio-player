@@ -90,6 +90,20 @@
             flex-direction:column;
             gap:10px;
         }
+        .list-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:10px;
+        }
+        #clearBtn{
+            background:#FF3B30;
+            color:white;
+            border:none;
+            padding:6px 12px;
+            border-radius:8px;
+            font-size:14px;
+        }
         #playlist{
             max-height:220px;
             overflow-y:auto;
@@ -97,6 +111,7 @@
         .item{
             background:#2C2C2E;padding:14px;border-radius:10px;
             margin-bottom:8px;
+            cursor:pointer;
         }
         .item.active{background:#007AFF}
 
@@ -150,6 +165,10 @@
     </div>
 
     <div class="bottom">
+        <div class="list-header">
+            <h3>播放列表</h3>
+            <button id="clearBtn">一键清空</button>
+        </div>
         <div id="playlist"></div>
         <button id="selectBtn">选择音频文件（可多选）</button>
         <input type="file" id="fileInput" accept=".mp3,.m4a,.wav,.aac" multiple>
@@ -172,13 +191,33 @@
     const playlist = document.getElementById('playlist');
     const selectBtn = document.getElementById('selectBtn');
     const fileInput = document.getElementById('fileInput');
+    const clearBtn = document.getElementById('clearBtn');
 
     // 选择文件
     selectBtn.onclick = () => fileInput.click();
     fileInput.onchange = (e) => {
-        files = Array.from(e.target.files);
+        // 自动按文件名数字顺序排序
+        files = Array.from(e.target.files).sort((a, b) => {
+            return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+        });
         renderList();
         if(files.length) playIndex(0);
+    };
+
+    // 一键清空播放列表
+    clearBtn.onclick = () => {
+        if(files.length === 0) return;
+        audio.pause();
+        audio.src = '';
+        files = [];
+        currIndex = 0;
+        playBtn.innerText = '▶️';
+        wheel.classList.remove('play');
+        bar.style.width = '0%';
+        dot.style.left = '0%';
+        currText.innerText = '00:00';
+        durText.innerText = '00:00';
+        renderList();
     };
 
     // 播放列表
