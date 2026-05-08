@@ -110,8 +110,7 @@
         }
         .item{
             background:#2C2C2E;padding:14px;border-radius:10px;
-            margin-bottom:8px;
-            cursor:pointer;
+            margin-bottom:8px;cursor:pointer;
         }
         .item.active{background:#007AFF}
 
@@ -131,181 +130,234 @@
 </head>
 <body>
 
-    <div class="top">本地磁带播放器</div>
+<div class="top">本地磁带播放器</div>
 
-    <div class="cassette-area">
-        <div class="cassette">
-            <div class="wheel" id="wheel"></div>
+<div class="cassette-area">
+    <div class="cassette">
+        <div class="wheel" id="wheel"></div>
+    </div>
+
+    <div class="progress-box">
+        <div class="time">
+            <span id="curr">00:00</span>
+            <span id="dur">00:00</span>
         </div>
-
-        <div class="progress-box">
-            <div class="time">
-                <span id="curr">00:00</span>
-                <span id="dur">00:00</span>
-            </div>
-            <div class="progress-wrap" id="progressWrap">
-                <div class="progress-bar" id="bar"></div>
-                <div class="progress-dot" id="dot"></div>
-            </div>
-        </div>
-
-        <div class="controls">
-            <button class="ctrl-btn" id="prev">⏮️</button>
-            <button class="ctrl-btn" id="play">▶️</button>
-            <button class="ctrl-btn" id="next">⏭️</button>
-        </div>
-
-        <div class="speed">
-            <button class="active" data-s="0.5">0.5x</button>
-            <button data-s="0.75">0.75x</button>
-            <button data-s="1">1x</button>
-            <button data-s="1.5">1.5x</button>
-            <button data-s="2">2x</button>
+        <div class="progress-wrap" id="progressWrap">
+            <div class="progress-bar" id="bar"></div>
+            <div class="progress-dot" id="dot"></div>
         </div>
     </div>
 
-    <div class="bottom">
-        <div class="list-header">
-            <h3>播放列表</h3>
-            <button id="clearBtn">一键清空</button>
-        </div>
-        <div id="playlist"></div>
-        <button id="selectBtn">选择音频文件（可多选）</button>
-        <input type="file" id="fileInput" accept=".mp3,.m4a,.wav,.aac" multiple>
+    <div class="controls">
+        <button class="ctrl-btn" id="prev">⏮️</button>
+        <button class="ctrl-btn" id="play">▶️</button>
+        <button class="ctrl-btn" id="next">⏭️</button>
     </div>
+
+    <div class="speed">
+        <button class="active" data-s="0.5">0.5x</button>
+        <button data-s="0.75">0.75x</button>
+        <button data-s="1">1x</button>
+        <button data-s="1.5">1.5x</button>
+        <button data-s="2">2x</button>
+    </div>
+</div>
+
+<div class="bottom">
+    <div class="list-header">
+        <h3>播放列表</h3>
+        <button id="clearBtn">一键清空</button>
+    </div>
+    <div id="playlist"></div>
+    <button id="selectBtn">选择音频文件（可多选）</button>
+    <input type="file" id="fileInput" accept=".mp3,.m4a,.wav,.aac" multiple>
+</div>
 
 <script>
-    const audio = new Audio();
-    let files = [];
-    let currIndex = 0;
+const audio = new Audio();
+let files = [];
+let currIndex = 0;
 
-    const wheel = document.getElementById('wheel');
-    const playBtn = document.getElementById('play');
-    const prevBtn = document.getElementById('prev');
-    const nextBtn = document.getElementById('next');
-    const progressWrap = document.getElementById('progressWrap');
-    const bar = document.getElementById('bar');
-    const dot = document.getElementById('dot');
-    const currText = document.getElementById('curr');
-    const durText = document.getElementById('dur');
-    const playlist = document.getElementById('playlist');
-    const selectBtn = document.getElementById('selectBtn');
-    const fileInput = document.getElementById('fileInput');
-    const clearBtn = document.getElementById('clearBtn');
+const wheel = document.getElementById('wheel');
+const playBtn = document.getElementById('play');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+const progressWrap = document.getElementById('progressWrap');
+const bar = document.getElementById('bar');
+const dot = document.getElementById('dot');
+const currText = document.getElementById('curr');
+const durText = document.getElementById('dur');
+const playlist = document.getElementById('playlist');
+const selectBtn = document.getElementById('selectBtn');
+const fileInput = document.getElementById('fileInput');
+const clearBtn = document.getElementById('clearBtn');
 
-    // 选择文件
-    selectBtn.onclick = () => fileInput.click();
-    fileInput.onchange = (e) => {
-        // 自动按文件名数字顺序排序
-        files = Array.from(e.target.files).sort((a, b) => {
-            return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-        });
-        renderList();
-        if(files.length) playIndex(0);
-    };
+// ==============================================
+// 🔥 核心：打开软件 → 自动加载上次的列表和进度
+// ==============================================
+window.addEventListener('load', () => {
+    loadFromLocal();
+});
 
-    // 一键清空播放列表
-    clearBtn.onclick = () => {
-        if(files.length === 0) return;
-        audio.pause();
-        audio.src = '';
-        files = [];
-        currIndex = 0;
-        playBtn.innerText = '▶️';
-        wheel.classList.remove('play');
-        bar.style.width = '0%';
-        dot.style.left = '0%';
-        currText.innerText = '00:00';
-        durText.innerText = '00:00';
-        renderList();
-    };
+// ==============================================
+// 🔥 保存播放列表到本地
+// ==============================================
+function saveListToLocal() {
+    const list = files.map(f => ({ name: f.name }));
+    localStorage.setItem('playlist', JSON.stringify(list));
+}
 
-    // 播放列表
-    function renderList(){
-        playlist.innerHTML = '';
-        files.forEach((f,i)=>{
-            let div = document.createElement('div');
-            div.className = 'item'+(i==currIndex?' active':'');
-            div.innerText = f.name;
-            div.onclick = () => playIndex(i);
-            playlist.appendChild(div);
-        });
+// ==============================================
+// 🔥 保存播放进度（第几首 + 第几秒）
+// ==============================================
+function saveProgressToLocal() {
+    localStorage.setItem('lastIndex', currIndex);
+    localStorage.setItem('lastTime', audio.currentTime);
+}
+
+// ==============================================
+// 🔥 从本地读取所有数据
+// ==============================================
+function loadFromLocal() {
+    const list = localStorage.getItem('playlist');
+    const lastIdx = localStorage.getItem('lastIndex');
+    const lastTime = localStorage.getItem('lastTime');
+
+    if (list) {
+        try {
+            const parsed = JSON.parse(list);
+            files = parsed.map(item => new File([], item.name));
+            renderList();
+        } catch (e) {}
     }
 
-    // 播放
-    function playIndex(i){
-        currIndex = i;
-        audio.src = URL.createObjectURL(files[i]);
+    if (lastIdx !== null && files.length > 0) {
+        currIndex = Number(lastIdx);
+        setTimeout(() => {
+            if (lastTime) audio.currentTime = Number(lastTime);
+            renderList();
+        }, 300);
+    }
+}
+
+// 选择文件（自动排序）
+selectBtn.onclick = () => fileInput.click();
+fileInput.onchange = (e) => {
+    files = Array.from(e.target.files).sort((a, b) => {
+        return a.name.localeCompare(b.name, undefined, { numeric: true });
+    });
+    saveListToLocal();
+    renderList();
+    if (files.length) playIndex(0);
+};
+
+// 一键清空（同时清除本地保存）
+clearBtn.onclick = () => {
+    audio.pause();
+    audio.src = '';
+    files = [];
+    currIndex = 0;
+    playBtn.innerText = '▶️';
+    wheel.classList.remove('play');
+    bar.style.width = '0%';
+    dot.style.left = '0%';
+    currText.innerText = '00:00';
+    durText.innerText = '00:00';
+    localStorage.clear();
+    renderList();
+};
+
+// 渲染列表
+function renderList() {
+    playlist.innerHTML = '';
+    files.forEach((f, i) => {
+        let div = document.createElement('div');
+        div.className = 'item' + (i === currIndex ? ' active' : '');
+        div.innerText = f.name;
+        div.onclick = () => playIndex(i);
+        playlist.appendChild(div);
+    });
+}
+
+// 播放
+function playIndex(i) {
+    currIndex = i;
+    audio.src = URL.createObjectURL(files[i]);
+    audio.play();
+    playBtn.innerText = '⏸️';
+    wheel.classList.add('play');
+    saveProgressToLocal();
+    renderList();
+}
+
+// 播放/暂停
+playBtn.onclick = () => {
+    if (!files.length) return;
+    if (audio.paused) {
         audio.play();
         playBtn.innerText = '⏸️';
         wheel.classList.add('play');
-        renderList();
+    } else {
+        audio.pause();
+        playBtn.innerText = '▶️';
+        wheel.classList.remove('play');
     }
+};
 
-    // 播放暂停
-    playBtn.onclick = () => {
-        if(!files.length) return;
-        if(audio.paused){
-            audio.play();
-            playBtn.innerText='⏸️';
-            wheel.classList.add('play');
-        }else{
-            audio.pause();
-            playBtn.innerText='▶️';
-            wheel.classList.remove('play');
-        }
-    };
+// 上一曲
+prevBtn.onclick = () => {
+    if (currIndex > 0) playIndex(currIndex - 1);
+};
 
-    // 上下曲
-    prevBtn.onclick = () => {
-        if(currIndex>0) playIndex(currIndex-1);
-    };
-    nextBtn.onclick = () => {
-        if(currIndex < files.length-1) playIndex(currIndex+1);
-    };
+// 下一曲
+nextBtn.onclick = () => {
+    if (currIndex < files.length - 1) playIndex(currIndex + 1);
+};
 
-    // 进度条
-    audio.ontimeupdate = () => {
-        if(!audio.duration) return;
-        let per = (audio.currentTime / audio.duration)*100;
-        bar.style.width = per+'%';
-        dot.style.left = per+'%';
-        currText.innerText = fmt(audio.currentTime);
-        durText.innerText = fmt(audio.duration);
-    };
+// 进度条同步
+audio.ontimeupdate = () => {
+    if (!audio.duration) return;
+    const per = (audio.currentTime / audio.duration) * 100;
+    bar.style.width = per + '%';
+    dot.style.left = per + '%';
+    currText.innerText = fmt(audio.currentTime);
+    durText.innerText = fmt(audio.duration);
+    saveProgressToLocal();
+};
 
-    // 点击跳转
-    progressWrap.onclick = (e) => {
-        let rect = progressWrap.getBoundingClientRect();
-        let per = (e.clientX - rect.left) / rect.width;
-        audio.currentTime = per * audio.duration;
-    };
+// 点击进度条跳转
+progressWrap.onclick = (e) => {
+    if (!audio.duration) return;
+    const rect = progressWrap.getBoundingClientRect();
+    const per = (e.clientX - rect.left) / rect.width;
+    audio.currentTime = per * audio.duration;
+};
 
-    // 自动下一曲
-    audio.onended = () => {
-        if(currIndex < files.length-1){
-            playIndex(currIndex+1);
-        }else{
-            playBtn.innerText='▶️';
-            wheel.classList.remove('play');
-        }
-    };
-
-    // 倍速
-    document.querySelectorAll('.speed button').forEach(b=>{
-        b.onclick=()=>{
-            document.querySelectorAll('.speed button').forEach(x=>x.classList.remove('active'));
-            b.classList.add('active');
-            audio.playbackRate = parseFloat(b.dataset.s);
-        }
-    });
-
-    function fmt(t){
-        if(isNaN(t)) return '00:00';
-        let m = Math.floor(t/60);
-        let s = Math.floor(t%60);
-        return `${String(m).padStart(2,0)}:${String(s).padStart(2,0)}`;
+// 自动下一曲
+audio.onended = () => {
+    if (currIndex < files.length - 1) {
+        playIndex(currIndex + 1);
+    } else {
+        playBtn.innerText = '▶️';
+        wheel.classList.remove('play');
     }
+};
+
+// 倍速
+document.querySelectorAll('.speed button').forEach(b => {
+    b.onclick = () => {
+        document.querySelectorAll('.speed button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        audio.playbackRate = parseFloat(b.dataset.s);
+    };
+});
+
+function fmt(t) {
+    if (isNaN(t)) return '00:00';
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60);
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 </script>
 </body>
 </html>
