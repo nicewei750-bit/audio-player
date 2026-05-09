@@ -155,7 +155,7 @@
     </div>
 
     <div class="speed">
-        <button class="active" data-s="0.5">0.5x</button>
+        <button data-s="0.5">0.5x</button>
         <button data-s="0.75">0.75x</button>
         <button data-s="1">1x</button>
         <button data-s="1.5">1.5x</button>
@@ -177,7 +177,7 @@
 const audio = new Audio();
 let files = [];
 let currIndex = 0;
-let savedSpeed = 1; // 🔥 全局倍速
+let savedSpeed = 1;
 
 const wheel = document.getElementById('wheel');
 const playBtn = document.getElementById('play');
@@ -194,37 +194,15 @@ const fileInput = document.getElementById('fileInput');
 const clearBtn = document.getElementById('clearBtn');
 const speedBtns = document.querySelectorAll('.speed button');
 
-// ==============================================
-// 🔥 打开自动加载：列表 + 进度 + 倍速
-// ==============================================
+// 只记忆倍速，不记忆播放列表（解决列表在但播不了）
 window.addEventListener('load', () => {
-    loadFromLocal();
     loadSpeedFromLocal();
 });
 
-// ==============================================
-// 🔥 保存列表
-// ==============================================
-function saveListToLocal() {
-    const list = files.map(f => ({ name: f.name }));
-    localStorage.setItem('playlist', JSON.stringify(list));
-}
-
-// ==============================================
-// 🔥 保存播放进度
-// ==============================================
-function saveProgressToLocal() {
-    localStorage.setItem('lastIndex', currIndex);
-    localStorage.setItem('lastTime', audio.currentTime);
-}
-
-// ==============================================
-// 🔥 保存倍速（永久保存）
-// ==============================================
+// 倍速保存
 function saveSpeedToLocal(speed) {
     localStorage.setItem('playbackSpeed', speed);
 }
-
 function loadSpeedFromLocal() {
     const speed = localStorage.getItem('playbackSpeed');
     if (speed) {
@@ -234,43 +212,20 @@ function loadSpeedFromLocal() {
             b.classList.remove('active');
             if (b.dataset.s == speed) b.classList.add('active');
         });
+    } else {
+        speedBtns[2].classList.add('active');
     }
 }
 
-// ==============================================
-// 🔥 读取所有数据
-// ==============================================
-function loadFromLocal() {
-    const list = localStorage.getItem('playlist');
-    const lastIdx = localStorage.getItem('lastIndex');
-    const lastTime = localStorage.getItem('lastTime');
-
-    if (list) {
-        try {
-            const parsed = JSON.parse(list);
-            files = parsed.map(item => new File([], item.name));
-            renderList();
-        } catch (e) {}
-    }
-
-    if (lastIdx !== null && files.length > 0) {
-        currIndex = Number(lastIdx);
-        setTimeout(() => {
-            if (lastTime) audio.currentTime = Number(lastTime);
-            renderList();
-        }, 300);
-    }
-}
-
-// 选择文件
+// 选择文件 + 自动数字排序
 selectBtn.onclick = () => fileInput.click();
 fileInput.onchange = (e) => {
     files = Array.from(e.target.files).sort((a, b) => {
-        return a.name.localeCompare(b.name, undefined, { numeric: true });
+        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
     });
-    saveListToLocal();
+    currIndex = 0;
     renderList();
-    if (files.length) playIndex(0);
+    playIndex(0);
 };
 
 // 一键清空
@@ -285,7 +240,6 @@ clearBtn.onclick = () => {
     dot.style.left = '0%';
     currText.innerText = '00:00';
     durText.innerText = '00:00';
-    localStorage.clear();
     renderList();
 };
 
@@ -301,15 +255,14 @@ function renderList() {
     });
 }
 
-// 播放 → 🔥 自动应用保存的倍速
+// 播放切歌自动沿用固定倍速
 function playIndex(i) {
     currIndex = i;
     audio.src = URL.createObjectURL(files[i]);
-    audio.playbackRate = savedSpeed; // 🔥 关键
+    audio.playbackRate = savedSpeed;
     audio.play();
     playBtn.innerText = '⏸️';
     wheel.classList.add('play');
-    saveProgressToLocal();
     renderList();
 }
 
@@ -331,7 +284,6 @@ playBtn.onclick = () => {
 prevBtn.onclick = () => {
     if (currIndex > 0) playIndex(currIndex - 1);
 };
-
 // 下一曲
 nextBtn.onclick = () => {
     if (currIndex < files.length - 1) playIndex(currIndex + 1);
@@ -345,10 +297,9 @@ audio.ontimeupdate = () => {
     dot.style.left = per + '%';
     currText.innerText = fmt(audio.currentTime);
     durText.innerText = fmt(audio.duration);
-    saveProgressToLocal();
 };
 
-// 跳转
+// 进度条点击跳转
 progressWrap.onclick = (e) => {
     if (!audio.duration) return;
     const rect = progressWrap.getBoundingClientRect();
@@ -366,7 +317,7 @@ audio.onended = () => {
     }
 };
 
-// 倍速设置 → 🔥 点击一次永久保存
+// 倍速切换永久记忆、切歌不重置
 speedBtns.forEach(b => {
     b.onclick = () => {
         speedBtns.forEach(x => x.classList.remove('active'));
