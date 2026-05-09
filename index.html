@@ -177,6 +177,7 @@
 const audio = new Audio();
 let files = [];
 let currIndex = 0;
+let savedSpeed = 1; // 🔥 全局倍速
 
 const wheel = document.getElementById('wheel');
 const playBtn = document.getElementById('play');
@@ -191,16 +192,18 @@ const playlist = document.getElementById('playlist');
 const selectBtn = document.getElementById('selectBtn');
 const fileInput = document.getElementById('fileInput');
 const clearBtn = document.getElementById('clearBtn');
+const speedBtns = document.querySelectorAll('.speed button');
 
 // ==============================================
-// 🔥 核心：打开软件 → 自动加载上次的列表和进度
+// 🔥 打开自动加载：列表 + 进度 + 倍速
 // ==============================================
 window.addEventListener('load', () => {
     loadFromLocal();
+    loadSpeedFromLocal();
 });
 
 // ==============================================
-// 🔥 保存播放列表到本地
+// 🔥 保存列表
 // ==============================================
 function saveListToLocal() {
     const list = files.map(f => ({ name: f.name }));
@@ -208,7 +211,7 @@ function saveListToLocal() {
 }
 
 // ==============================================
-// 🔥 保存播放进度（第几首 + 第几秒）
+// 🔥 保存播放进度
 // ==============================================
 function saveProgressToLocal() {
     localStorage.setItem('lastIndex', currIndex);
@@ -216,7 +219,26 @@ function saveProgressToLocal() {
 }
 
 // ==============================================
-// 🔥 从本地读取所有数据
+// 🔥 保存倍速（永久保存）
+// ==============================================
+function saveSpeedToLocal(speed) {
+    localStorage.setItem('playbackSpeed', speed);
+}
+
+function loadSpeedFromLocal() {
+    const speed = localStorage.getItem('playbackSpeed');
+    if (speed) {
+        savedSpeed = parseFloat(speed);
+        audio.playbackRate = savedSpeed;
+        speedBtns.forEach(b => {
+            b.classList.remove('active');
+            if (b.dataset.s == speed) b.classList.add('active');
+        });
+    }
+}
+
+// ==============================================
+// 🔥 读取所有数据
 // ==============================================
 function loadFromLocal() {
     const list = localStorage.getItem('playlist');
@@ -240,7 +262,7 @@ function loadFromLocal() {
     }
 }
 
-// 选择文件（自动排序）
+// 选择文件
 selectBtn.onclick = () => fileInput.click();
 fileInput.onchange = (e) => {
     files = Array.from(e.target.files).sort((a, b) => {
@@ -251,7 +273,7 @@ fileInput.onchange = (e) => {
     if (files.length) playIndex(0);
 };
 
-// 一键清空（同时清除本地保存）
+// 一键清空
 clearBtn.onclick = () => {
     audio.pause();
     audio.src = '';
@@ -279,10 +301,11 @@ function renderList() {
     });
 }
 
-// 播放
+// 播放 → 🔥 自动应用保存的倍速
 function playIndex(i) {
     currIndex = i;
     audio.src = URL.createObjectURL(files[i]);
+    audio.playbackRate = savedSpeed; // 🔥 关键
     audio.play();
     playBtn.innerText = '⏸️';
     wheel.classList.add('play');
@@ -290,7 +313,7 @@ function playIndex(i) {
     renderList();
 }
 
-// 播放/暂停
+// 播放暂停
 playBtn.onclick = () => {
     if (!files.length) return;
     if (audio.paused) {
@@ -314,7 +337,7 @@ nextBtn.onclick = () => {
     if (currIndex < files.length - 1) playIndex(currIndex + 1);
 };
 
-// 进度条同步
+// 进度条
 audio.ontimeupdate = () => {
     if (!audio.duration) return;
     const per = (audio.currentTime / audio.duration) * 100;
@@ -325,7 +348,7 @@ audio.ontimeupdate = () => {
     saveProgressToLocal();
 };
 
-// 点击进度条跳转
+// 跳转
 progressWrap.onclick = (e) => {
     if (!audio.duration) return;
     const rect = progressWrap.getBoundingClientRect();
@@ -343,12 +366,14 @@ audio.onended = () => {
     }
 };
 
-// 倍速
-document.querySelectorAll('.speed button').forEach(b => {
+// 倍速设置 → 🔥 点击一次永久保存
+speedBtns.forEach(b => {
     b.onclick = () => {
-        document.querySelectorAll('.speed button').forEach(x => x.classList.remove('active'));
+        speedBtns.forEach(x => x.classList.remove('active'));
         b.classList.add('active');
-        audio.playbackRate = parseFloat(b.dataset.s);
+        savedSpeed = parseFloat(b.dataset.s);
+        audio.playbackRate = savedSpeed;
+        saveSpeedToLocal(savedSpeed);
     };
 });
 
