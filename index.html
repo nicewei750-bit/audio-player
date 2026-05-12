@@ -194,12 +194,31 @@ const fileInput = document.getElementById('fileInput');
 const clearBtn = document.getElementById('clearBtn');
 const speedBtns = document.querySelectorAll('.speed button');
 
-// 只记忆倍速，不记忆播放列表（解决列表在但播不了）
+// 页面加载：记忆倍速 + 记忆列表名称
 window.addEventListener('load', () => {
     loadSpeedFromLocal();
+    loadListNameOnly();
 });
 
-// 倍速保存
+// 只保存列表名字，不保存真实文件（避免失效点不了）
+function saveListNameOnly() {
+    const nameList = files.map(f => f.name);
+    localStorage.setItem('playListNames', JSON.stringify(nameList));
+}
+
+// 加载列表名字，只渲染，不绑定失效文件
+function loadListNameOnly() {
+    const nameStr = localStorage.getItem('playListNames');
+    if(!nameStr) return;
+    try{
+        const nameArr = JSON.parse(nameStr);
+        // 生成空占位列表，只显示名字
+        files = nameArr.map(name => new File([], name));
+        renderList();
+    }catch(e){}
+}
+
+// 保存倍速
 function saveSpeedToLocal(speed) {
     localStorage.setItem('playbackSpeed', speed);
 }
@@ -217,13 +236,14 @@ function loadSpeedFromLocal() {
     }
 }
 
-// 选择文件 + 自动数字排序
+// 重新导入文件：直接覆盖旧列表
 selectBtn.onclick = () => fileInput.click();
 fileInput.onchange = (e) => {
     files = Array.from(e.target.files).sort((a, b) => {
         return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
     });
     currIndex = 0;
+    saveListNameOnly();
     renderList();
     playIndex(0);
 };
@@ -240,6 +260,7 @@ clearBtn.onclick = () => {
     dot.style.left = '0%';
     currText.innerText = '00:00';
     durText.innerText = '00:00';
+    localStorage.removeItem('playListNames');
     renderList();
 };
 
@@ -250,12 +271,16 @@ function renderList() {
         let div = document.createElement('div');
         div.className = 'item' + (i === currIndex ? ' active' : '');
         div.innerText = f.name;
-        div.onclick = () => playIndex(i);
+        // 重启后文件失效，点击不处理，不报错
+        div.onclick = () => {
+            if(!files[i].lastModified) return;
+            playIndex(i);
+        };
         playlist.appendChild(div);
     });
 }
 
-// 播放切歌自动沿用固定倍速
+// 播放自动沿用倍速
 function playIndex(i) {
     currIndex = i;
     audio.src = URL.createObjectURL(files[i]);
@@ -317,7 +342,7 @@ audio.onended = () => {
     }
 };
 
-// 倍速切换永久记忆、切歌不重置
+// 倍速永久记忆
 speedBtns.forEach(b => {
     b.onclick = () => {
         speedBtns.forEach(x => x.classList.remove('active'));
